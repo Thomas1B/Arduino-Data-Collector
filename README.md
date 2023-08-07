@@ -7,9 +7,20 @@ This program uses **pandas** and **progressbar2** libaries.
 
 DataFrame are set up as columns.
 
+## Program Requirements
 This program expects the first line of data to be the column headers.<br>
-Example from arduino: `Serial.print("Time, Temperature, Pressure")`<br>
+Example from arduino: `Serial.print("Time, Temperature, Pressure")`
 
+Data is printed from the arduino as such:
+```C
+Serial.print(time)
+Serial.print(" ")
+Serial.print(temperature)
+Serial.print(" ")
+Serial.print(pressure)
+```
+
+## Program Parameters
 ```
 '''
 Program Parameters:
@@ -22,8 +33,9 @@ port = 'COM5'
 baudrate = 9600
 num_of_samples = 50
 ```
+<hr>
 
-To run program: 
+### To run program: 
 ```Bash
 python Arduino-Data-Collector.py
 ```
