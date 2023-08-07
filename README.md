@@ -23,4 +23,7 @@ baudrate = 9600
 num_of_samples = 50
 ```
 
-To run program: `python Arduino Serial Reader.py`
+To run program: 
+```Bash
+python Arduino-Data-Collector.py
+```
