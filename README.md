@@ -18,6 +18,7 @@ Serial.print(" ")
 Serial.print(temperature)
 Serial.print(" ")
 Serial.print(pressure)
+Serial.println()
 ```
 
 ## Program Parameters
