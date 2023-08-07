@@ -12,7 +12,7 @@ This program expects the first line of data to be the column headers.<br>
 Example from arduino: `Serial.print("Time, Temperature, Pressure")`
 
 Data is printed from the arduino as such:
-```C
+```c
 Serial.print(time)
 Serial.print(" ")
 Serial.print(temperature)
