@@ -188,6 +188,6 @@ if __name__ == "__main__":
 
     port = 'COM5'
     baudrate = 9600
-    num_of_samples = 50
+    num_of_samples = 2000
 
     main(port, baudrate, num_of_samples)
