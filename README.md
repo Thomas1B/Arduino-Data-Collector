@@ -38,5 +38,5 @@ num_of_samples = 50
 
 ### To run program: 
 ```Bash
-python Arduino-Data-Collector.py
+python Arduino_Data_Collector.py
 ```
