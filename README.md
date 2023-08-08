@@ -28,6 +28,7 @@ Program Parameters:
     baudrate: baudrate that arduino is set to.
     num_of_samples: number of samples to be taken.
 ```
+
 <hr>
 
 ### To run program: 
