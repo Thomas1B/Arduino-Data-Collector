@@ -10,14 +10,16 @@ import progressbar
 import os
 
 
-def main(port: str, baudrate: int, num_of_samples=1) -> None:
+def main() -> None:
     '''
     Main Function to run the program
     '''
 
-    text = 'Welcome to the Arduino Serial Reader!'
-    text += '\nNote: Data is saved as a csv file.'
+    text = 'Welcome to the Arduino Serial Reader!\n'
+    text += 'Note: Data is saved as a csv file.\n'
     print(text)
+
+    port, baudrate, num_of_samples = get_collection_params()
     print('\nConnecting to the Arduino ', end='')
 
     ser = None  # serial object
@@ -64,7 +66,63 @@ def main(port: str, baudrate: int, num_of_samples=1) -> None:
             print("\nError:")
             print(err, '\n')
         exit()
-    print(f'Saved as "{save_name}".')
+    print(f'Saved as "{save_name}".\n')
+
+
+def get_collection_params() -> tuple:
+    '''
+    Function to get the parameters for collecting data.
+
+        Returns: 
+            (port, baudrate, num_of_samples)
+
+    '''
+    user_print = '---> {}\n'  # string to print
+
+    port, baudrate, num_of_samples = None, None, None
+
+    # getting the port from user
+    while True:
+        port = input("Enter the port: ")
+        if port:
+            break
+        else:
+            text = 'You must enter a port!\n'
+            print(text)
+    print(user_print.format(port))
+
+    # getting baudrate from user
+    while True:
+        baudrate = input("Enter the baudrate, (default 9600): ")
+
+        if baudrate.isdigit():
+            baudrate = int(baudrate)
+            break
+        elif baudrate == '':
+            baudrate = 9600
+            break
+        else:
+            text = 'Baudrate must be a integer!\n'
+            print(text)
+    print(user_print.format(baudrate))
+
+    # getting number of samples from user
+    while True:
+        num_of_samples = input(
+            "Enter the number of sample to collect (default 100): ")
+
+        if num_of_samples.isdigit():
+            num_of_samples = int(num_of_samples)
+            break
+        elif num_of_samples == '':
+            num_of_samples = 100
+            break
+        else:
+            text = 'Number of samples must be an integer.\n'
+            print(text)
+    print(user_print.format(num_of_samples))
+
+    return port, baudrate, num_of_samples
 
 
 def get_saving_params() -> str:
@@ -174,3 +232,8 @@ def read_data(num_of_samples: int, ser, print_sample=False) -> pd.DataFrame:
                 bar.update(count)
 
     return data
+
+
+if __name__ == "__main__":
+
+    main()
