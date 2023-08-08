@@ -2,6 +2,9 @@
 Python program to connect to an arduino, read in data and save it to a CSV File.
 DataFrame are set up as columns.
 
+This program expects the first line of data to be the column headers.
+Example from arduino: Serial.print("Time Temperature Pressure")
+
 '''
 
 import serial
@@ -19,7 +22,7 @@ def main() -> None:
     text += 'Note: Data is saved as a csv file.\n'
     print(text)
 
-    port, baudrate, num_of_samples = get_collection_params()
+    port, baudrate, num_of_samples, headers = get_collection_params()
     print('\nConnecting to the Arduino ', end='')
 
     ser = None  # serial object
@@ -52,7 +55,8 @@ def main() -> None:
     else:
         print("\nData collection Started")
 
-    data = read_data(num_of_samples, ser=ser, print_sample=user)
+    data = read_data(num_of_samples, ser=ser,
+                     print_sample=user, headers=headers)
 
     print('\nData Collection Finished.\n')
 
@@ -74,7 +78,7 @@ def get_collection_params() -> tuple:
     Function to get the parameters for collecting data.
 
         Returns: 
-            (port, baudrate, num_of_samples)
+            (port, baudrate, num_of_samples, header)
 
     '''
     user_print = '---> {}\n'  # string to print
@@ -122,7 +126,14 @@ def get_collection_params() -> tuple:
             print(text)
     print(user_print.format(num_of_samples))
 
-    return port, baudrate, num_of_samples
+    # asking user if headers are printed from the arduino
+    header = input("Are headers printed from the arduino? (y/n): ")
+    if header in ['y', 'yes']:
+        header = True
+    else:
+        header = False
+
+    return port, baudrate, num_of_samples, header
 
 
 def get_saving_params() -> str:
@@ -174,7 +185,7 @@ def get_saving_params() -> str:
     return path
 
 
-def read_data(num_of_samples: int, ser, print_sample=False) -> pd.DataFrame:
+def read_data(num_of_samples: int, ser, print_sample=False, headers=True) -> pd.DataFrame:
     '''
     Function to read in data from the arduino.
 
@@ -204,14 +215,23 @@ def read_data(num_of_samples: int, ser, print_sample=False) -> pd.DataFrame:
                                       widgets=widgets).start()
 
     # loop to collect data
-    for count in range(num_of_samples+1):
+    samples_to_take = num_of_samples
+    if headers:
+        samples_to_take += 1
+
+    for count in range(samples_to_take):
         # num_of_samples + 1 to account for reading column names.
 
         # reading a sample then decoding and stripping
         data_in = ser.readline().decode().strip()
 
-        if count == 0:
+        if count == 0 and headers:
             # Getting the column names
+            column_names = data_in.split()
+            data = pd.DataFrame(columns=column_names)
+            if print_sample:
+                print(', '.join(column_names))
+        elif count == 0:
             column_names = data_in.split()
             data = pd.DataFrame(columns=column_names)
             if print_sample:
