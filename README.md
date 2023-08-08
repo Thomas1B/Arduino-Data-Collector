@@ -21,9 +21,16 @@ Serial.print(pressure)
 Serial.println()
 ```
 
+## Program Parameters
+```
+Program Parameters:
+    port: port arduino is connected to.
+    baudrate: baudrate that arduino is set to.
+    num_of_samples: number of samples to be taken.
+```
 <hr>
 
 ### To run program: 
 ```Bash
-python Arduino_Data_Collector.py
+python Arduino_DataCollector.py
 ```
