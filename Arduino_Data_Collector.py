@@ -43,11 +43,13 @@ def main() -> None:
 
     while True:
         start = input("Press Enter to start or another key to quit: ")
+
         if start == '':
-            print('---> starting...\n')
+            if print_sample:
+                print('---> starting...\n')
             break
         else:
-            print("Leave blank to start.\n")
+            exit()
 
     print()
     data = collect_data(num_of_samples,
