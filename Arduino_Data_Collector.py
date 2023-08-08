@@ -22,17 +22,7 @@ def main() -> None:
     text += 'Note: Data is saved as a csv file.\n'
     print(text)
 
-    port, baudrate, num_of_samples, headers = get_collection_params()
-    print('\nConnecting to the Arduino ', end='')
-
-    ser = None  # serial object
-    try:
-        # try block for connecting to arduino.
-        ser = serial.Serial(port, baudrate)
-        print('was successful!\n')
-    except serial.SerialException:
-        print("failed! Device cannot be found or can not be configured.\n")
-        quit()
+    port, baudrate, num_of_samples, headers, ser = get_collection_params()
 
     # asking user if they want to print data as it's collected.
     text = '''Would you like to print the data as it is collected? (y/n): '''
@@ -84,6 +74,7 @@ def get_collection_params() -> tuple:
     user_print = '---> {}\n'  # string to print
 
     port, baudrate, num_of_samples = None, None, None
+    ser = None
 
     # getting the port from user
     while True:
@@ -110,6 +101,15 @@ def get_collection_params() -> tuple:
             print(text)
     print(user_print.format(baudrate))
 
+    print('Connecting to the Arduino ', end='')
+    try:
+        # try block for connecting to arduino.
+        ser = serial.Serial(port, baudrate)
+        print('was successful!\n')
+    except serial.SerialException:
+        print("failed! Device cannot be found, make sure you selected the correct port.\n")
+        quit()
+
     # getting number of samples from user
     while True:
         num_of_samples = input(
@@ -133,7 +133,7 @@ def get_collection_params() -> tuple:
     else:
         header = False
 
-    return port, baudrate, num_of_samples, header
+    return port, baudrate, num_of_samples, header, ser
 
 
 def get_saving_params() -> str:
@@ -201,9 +201,9 @@ def read_data(num_of_samples: int, ser, print_sample=False, headers=True) -> pd.
 
     data = None     # temporary data.
 
+    # showing a progess bar
     bar = None
     if not print_sample:
-        # showing a progess bar
         widgets = [progressbar.Timer(format='Runtime: %(elapsed)s'), ' | ',
                    progressbar.Percentage(), ' | ',
                    progressbar.Counter(
@@ -214,42 +214,36 @@ def read_data(num_of_samples: int, ser, print_sample=False, headers=True) -> pd.
         bar = progressbar.ProgressBar(max_value=num_of_samples,
                                       widgets=widgets).start()
 
-    # loop to collect data
-    samples_to_take = num_of_samples
+    # declaring column headers for dataframe
+    data_in = ser.readline().decode().strip()
     if headers:
-        samples_to_take += 1
+        column_names = data_in.split()
+    else:
+        column_names = [
+            f'Col {i}' for i in range(len(data_in.split()))]
+        data = pd.DataFrame(columns=column_names)
+        if print_sample:
+            print(', '.join(column_names))
 
-    for count in range(samples_to_take):
+    # loop to collect data
+    for count in range(1, num_of_samples+1):
         # num_of_samples + 1 to account for reading column names.
 
         # reading a sample then decoding and stripping
         data_in = ser.readline().decode().strip()
 
-        if count == 0 and headers:
-            # Getting the column names
-            column_names = data_in.split()
-            data = pd.DataFrame(columns=column_names)
-            if print_sample:
-                print(', '.join(column_names))
-        elif count == 0:
-            column_names = data_in.split()
-            data = pd.DataFrame(columns=column_names)
-            if print_sample:
-                print(', '.join(column_names))
+        # converting a sample into floats and adding to dataframe.
+        d = pd.DataFrame(data_in.split(), dtype=float).T
+        d.columns = column_names
+        data = pd.concat([data, d], ignore_index=True)
 
+        if print_sample:
+            text = ', '.join(
+                pd.Series(d.values[0]).to_numpy().astype(str)
+            )
+            print(text)
         else:
-            # converting a sample into floats and adding to dataframe.
-            d = pd.DataFrame(data_in.split(), dtype=float).T
-            d.columns = column_names
-            data = pd.concat([data, d], ignore_index=True)
-
-            if print_sample:
-                text = ', '.join(
-                    pd.Series(d.values[0]).to_numpy().astype(str)
-                )
-                print(text)
-            else:
-                bar.update(count)
+            bar.update(count)
 
     return data
 
