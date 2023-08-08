@@ -22,36 +22,41 @@ def main() -> None:
     text += 'Note: Data is saved as a csv file.\n'
     print(text)
 
-    port, baudrate, num_of_samples, headers, ser = get_collection_params()
+    ser, num_of_samples, headers = get_collection_params()
 
     # asking user if they want to print data as it's collected.
-    text = '''Would you like to print the data as it is collected? (y/n): '''
-    user = input(text)
-    if user.lower() in ['y' or 'yes']:
-        user = True
-    else:
-        user = False
+    text = 'Would you like to print the data as it is collected?\n'
+    text += '1 - Yes, 2 - No: '
+    print_sample = None
+    while True:
+        print_sample = input(text)
+        if print_sample == '1':
+            print_sample = True
+            break
+        elif print_sample == '2':
+            print_sample = False
+            break
 
     # getting saving parameters
     save_name = get_saving_params()
+    print()  # for spacing
 
-    start = input("\nPress Enter to start: ")
-    if start != '':
-        return
+    while True:
+        start = input("Press Enter to start or another key to quit: ")
+        if start == '':
+            print('---> starting...\n')
+            break
+        else:
+            print("Leave blank to start.\n")
 
-    # if statement for styling prints
-    if user:
-        print("\nData collection Started\n")
-    else:
-        print("\nData collection Started")
-
-    data = read_data(num_of_samples, ser=ser,
-                     print_sample=user, headers=headers)
-
-    print('\nData Collection Finished.\n')
+    print()
+    data = collect_data(num_of_samples,
+                        ser=ser,
+                        print_sample=print_sample,
+                        headers=headers
+                        )
 
     # Saving data
-
     try:
         data.to_csv(save_name, index=False)
     except Exception as err:
@@ -60,7 +65,7 @@ def main() -> None:
             print("\nError:")
             print(err, '\n')
         exit()
-    print(f'Saved as "{save_name}".\n')
+    print(f'\nSaved as "{save_name}".\n')
 
 
 def get_collection_params() -> tuple:
@@ -127,13 +132,16 @@ def get_collection_params() -> tuple:
     print(user_print.format(num_of_samples))
 
     # asking user if headers are printed from the arduino
-    header = input("Are headers printed from the arduino? (y/n): ")
-    if header in ['y', 'yes']:
+    header = input("Are headers printed from the arduino? (deflaut yes): ")
+    if header:
         header = True
-    else:
+    elif header in ['n', 'no']:
         header = False
+    else:
+        header = True
+        print(user_print.format('yes'))
 
-    return port, baudrate, num_of_samples, header, ser
+    return ser, num_of_samples, header
 
 
 def get_saving_params() -> str:
@@ -185,7 +193,7 @@ def get_saving_params() -> str:
     return path
 
 
-def read_data(num_of_samples: int, ser, print_sample=False, headers=True) -> pd.DataFrame:
+def collect_data(num_of_samples: int, ser, print_sample=False, headers=True) -> pd.DataFrame:
     '''
     Function to read in data from the arduino.
 
@@ -198,8 +206,11 @@ def read_data(num_of_samples: int, ser, print_sample=False, headers=True) -> pd.
             DataFrame, with each kind of data as a column, (Ex: time, voltage, temperature, etc)
 
     '''
+    data = None     # temporary data. DO NOT DELETE
 
-    data = None     # temporary data.
+    # if statement for styling prints
+    if print_sample:
+        print("\nData collection started\n")
 
     # showing a progess bar
     bar = None
@@ -229,21 +240,45 @@ def read_data(num_of_samples: int, ser, print_sample=False, headers=True) -> pd.
     for count in range(1, num_of_samples+1):
         # num_of_samples + 1 to account for reading column names.
 
-        # reading a sample then decoding and stripping
-        data_in = ser.readline().decode().strip()
+        # reading data line
+        line = read_data(ser=ser, column_names=column_names)
 
-        # converting a sample into floats and adding to dataframe.
-        d = pd.DataFrame(data_in.split(), dtype=float).T
-        d.columns = column_names
-        data = pd.concat([data, d], ignore_index=True)
+        # adding line to dataframe
+        data = pd.concat([data, line], ignore_index=True)
 
         if print_sample:
             text = ', '.join(
-                pd.Series(d.values[0]).to_numpy().astype(str)
+                pd.Series(line.values[0]).to_numpy().astype(str)
             )
             print(text)
         else:
             bar.update(count)
+
+    if print_sample:
+        print("\nData collection finished\n")
+
+    return data
+
+
+def read_data(ser: serial.Serial, column_names: list = []) -> pd.DataFrame:
+    '''
+    Function to read one line of data from the arduino.
+
+        Parameters:
+            ser: Serial object.
+            column_names: (optional) names for each column
+
+        Returns:
+            DataFrame
+    '''
+
+    # reading a sample then decoding and stripping
+    data_in = ser.readline().decode().strip()
+
+    # converting a sample into floats and create a dataframe.
+    data = pd.DataFrame(data_in.split(), dtype=float).T
+    if column_names:
+        data.columns = column_names
 
     return data
 
