@@ -2,9 +2,6 @@
 Python program to connect to an arduino, read in data and save it to a CSV File.
 DataFrame are set up as columns.
 
-This program expects the first line of data to be the column headers.
-Example from arduino: Serial.print("Time, Temperature, Pressure")
-
 '''
 
 import serial
@@ -70,9 +67,12 @@ def main(port: str, baudrate: int, num_of_samples=1) -> None:
     print(f'Saved as "{save_name}".')
 
 
-def get_saving_params() -> None:
+def get_saving_params() -> str:
     '''
     Function to get parameters for saving the data to a csv file.
+
+        Returns:
+            filepath for saving the csv file.
     '''
 
     text = '\nData is saved as CSV file automatically.'
@@ -174,20 +174,3 @@ def read_data(num_of_samples: int, ser, print_sample=False) -> pd.DataFrame:
                 bar.update(count)
 
     return data
-
-
-if __name__ == "__main__":
-
-    '''
-    Program Parameters:
-        port: port arduino is connected to.
-        baudrate: baudrate that arduino is set to.
-        num_of_samples: number of samples to be taken.
-
-    '''
-
-    port = 'COM5'
-    baudrate = 9600
-    num_of_samples = 2000
-
-    main(port, baudrate, num_of_samples)
