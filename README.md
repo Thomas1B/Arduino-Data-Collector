@@ -21,19 +21,6 @@ Serial.print(pressure)
 Serial.println()
 ```
 
-## Program Parameters
-```
-'''
-Program Parameters:
-    port: port arduino is connected to.
-    baudrate: baudrate that arduino is set to.
-    num_of_samples: number of samples to be taken.
-'''
-
-port = 'COM5'
-baudrate = 9600
-num_of_samples = 50
-```
 <hr>
 
 ### To run program: 
