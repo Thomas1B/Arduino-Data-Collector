@@ -51,7 +51,6 @@ def main() -> None:
         else:
             exit()
 
-    print()
     data = collect_data(num_of_samples,
                         ser=ser,
                         print_sample=print_sample,
@@ -112,6 +111,7 @@ def get_collection_params() -> tuple:
     try:
         # try block for connecting to arduino.
         ser = serial.Serial(port, baudrate)
+        ser.close()
         print('was successful!\n')
     except serial.SerialException:
         print("failed! Device cannot be found, make sure you selected the correct port.\n")
@@ -135,9 +135,9 @@ def get_collection_params() -> tuple:
 
     # asking user if headers are printed from the arduino
     header = input("Are headers printed from the arduino? (deflaut yes): ")
-    if header:
+    if header.lower() in ['y', 'yes']:
         header = True
-    elif header in ['n', 'no']:
+    elif header.lower() in ['n', 'no']:
         header = False
     else:
         header = True
@@ -208,7 +208,6 @@ def collect_data(num_of_samples: int, ser, print_sample=False, headers=True) -> 
             DataFrame, with each kind of data as a column, (Ex: time, voltage, temperature, etc)
 
     '''
-    data = None     # temporary data. DO NOT DELETE
 
     # if statement for styling prints
     if print_sample:
@@ -227,16 +226,18 @@ def collect_data(num_of_samples: int, ser, print_sample=False, headers=True) -> 
         bar = progressbar.ProgressBar(max_value=num_of_samples,
                                       widgets=widgets).start()
 
-    # declaring column headers for dataframe
+    ser.open()
+    # creating dataframe and declaring column headers.
     data_in = ser.readline().decode().strip()
     if headers:
         column_names = data_in.split()
     else:
         column_names = [
             f'Col {i}' for i in range(len(data_in.split()))]
-        data = pd.DataFrame(columns=column_names)
-        if print_sample:
-            print(', '.join(column_names))
+        
+    data = pd.DataFrame(columns=column_names)
+    if print_sample:
+        print(', '.join(column_names))
 
     # loop to collect data
     for count in range(1, num_of_samples+1):
