@@ -12,6 +12,8 @@ import pandas as pd
 import progressbar
 import os
 
+default_num_of_samples = 50
+
 
 def main() -> None:
     '''
@@ -22,7 +24,7 @@ def main() -> None:
     text += 'Note: Data is saved as a csv file.\n'
     print(text)
 
-    ser, num_of_samples, headers = get_collection_params()
+    ser, num_of_samples, headers_in_data = get_collection_params()
 
     # asking user if they want to print data as it's collected.
     text = 'Would you like to print the data as it is collected?\n'
@@ -56,7 +58,7 @@ def main() -> None:
     data = collect_data(num_of_samples,
                         ser=ser,
                         print_sample=print_sample,
-                        headers=headers
+                        headers_in_data=headers_in_data
                         )
 
     # Saving data
@@ -75,7 +77,7 @@ def get_collection_params() -> tuple:
     '''
     Function to get the parameters for collecting data.
 
-        Returns: 
+        Returns:
             (ser, num_of_samples, header)
 
     '''
@@ -123,21 +125,22 @@ def get_collection_params() -> tuple:
     # getting number of samples from user
     while True:
         num_of_samples = input(
-            "Enter the number of sample to collect (default 100): ")
+            f"Enter the number of sample to collect (default {default_num_of_samples}): ")
 
         if num_of_samples.isdigit():
             num_of_samples = int(num_of_samples)
             break
         elif num_of_samples == '':
-            num_of_samples = 100
+            num_of_samples = default_num_of_samples
             break
         else:
             text = 'Number of samples must be an integer.\n'
             print(text)
     print(user_print.format(num_of_samples))
 
-    # asking user if headers are printed from the arduino
-    header = input("Are headers printed from the arduino? (deflaut yes): ")
+    # asking user if headers_in_data are printed from the arduino
+    header = input(
+        "Are headers_in_data printed from the arduino? (deflaut yes): ")
     if header.lower() in ['y', 'yes']:
         header = True
     elif header.lower() in ['n', 'no']:
@@ -199,7 +202,7 @@ def get_saving_params() -> str:
     return path
 
 
-def collect_data(num_of_samples: int, ser, print_sample=False, headers=True) -> pd.DataFrame:
+def collect_data(num_of_samples: int, ser, print_sample=False, headers_in_data=True) -> pd.DataFrame:
     '''
     Function to read in data from the arduino.
 
@@ -220,6 +223,7 @@ def collect_data(num_of_samples: int, ser, print_sample=False, headers=True) -> 
     # showing a progess bar using is not collecting data
     bar = None
     if not print_sample:
+        print()
         widgets = [progressbar.Timer(format='Runtime: %(elapsed)s'), ' | ',
                    progressbar.Percentage(), ' | ',
                    progressbar.Counter(
@@ -230,10 +234,10 @@ def collect_data(num_of_samples: int, ser, print_sample=False, headers=True) -> 
         bar = progressbar.ProgressBar(max_value=num_of_samples,
                                       widgets=widgets).start()
 
-    # Creating dataframe and declaring column headers:
+    # Creating dataframe and declaring column headers_in_data:
     ser.open()  # reconnecting to arduino.
     data_in = ser.readline().decode().strip()
-    if headers:
+    if headers_in_data:
         column_names = data_in.split()
     else:
         column_names = [
@@ -241,27 +245,40 @@ def collect_data(num_of_samples: int, ser, print_sample=False, headers=True) -> 
 
     data = pd.DataFrame(columns=column_names)
 
+    # Calculate the width for each column
+    column_widths = [max(len(str(item))+3 for item in column)
+                     for column in zip(column_names, *column_names)]
+
     # user wants to print data
     if print_sample:
-        # printing column headers
-        print(', '.join(column_names))
+        # Print headers_in_data
+        for col_names, width in zip(column_names, column_widths):
+            print(f"{col_names:{width}}", end=" | ",)
+        print()  # Newline after headers_in_data
+
+        # Print a separator line
+        for width in column_widths:
+            print("-" * width, end=" | ")
+        print()  # Newline after separator
 
     # Loop to collect data
-    for count in range(1, num_of_samples+1):
+    for count in range(0, num_of_samples+1):
         # num_of_samples + 1 to account for reading column names.
 
         # reading data line & adding to data frame
         line = read_data(ser=ser, column_names=column_names)
         data = pd.concat([data, line], ignore_index=True)
 
-        if print_sample:
+        if count == 0 and headers_in_data:
+            pass # skipping header reading
+        elif print_sample and count > 0:
             # if user wants to print the reads as they're collected.
             values = pd.Series(line.values[0]).to_numpy().astype(str)
-            
-            text = ', '.join(values)
-            text += f' | Sample {count}/{num_of_samples}'
-            print(text)
-        else:
+            for item, width in zip(values, column_widths):
+                print(f"{item:<{width}}", end=" | ")
+            print(f'Sample {count}/{num_of_samples}')
+
+        elif not print_sample:
             # updating progess bar
             bar.update(count)
 
