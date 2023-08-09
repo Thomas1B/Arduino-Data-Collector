@@ -8,9 +8,11 @@ Example from arduino: Serial.print("Time Temperature Pressure")
 '''
 
 import serial
-import pandas as pd
+import serial.tools.list_ports as list_ports
 import progressbar
+import pandas as pd
 import os
+
 
 default_num_of_samples = 50
 
@@ -48,8 +50,6 @@ def main() -> None:
         start = input("Press Enter to start or another key to quit: ")
 
         if start == '':
-            if print_sample:
-                print('---> starting...\n')
             break
         else:
             exit()
@@ -88,14 +88,31 @@ def get_collection_params() -> tuple:
     ser = None  # serial object
 
     # getting the port from user
+    avaliable_ports = []
+    avaliable_indices = []
+    for index, port in enumerate(list_ports.comports(), start=1):
+        avaliable_ports.append(port)
+        avaliable_indices.append(str(index))
+
+    print('Available Ports:')
+    text = '{:>3} - {}'
+    for index, port in enumerate(avaliable_ports, start=1):
+        print(text.format(index, port[1]))
+    print()
+
     while True:
         port = input("Enter the port: ")
-        if port:
-            break
+        if port.isdigit():
+            if port in avaliable_indices:
+                port = avaliable_ports[int(port)-1][0]
+                break
+            else:
+                text = f'Option "{port}" does not exist, try again.'
+                print(text)
         else:
-            text = 'You must enter a port!\n'
+            text = 'You must enter an integer corresponding to the port, try again.'
             print(text)
-    print(user_print.format(port))
+    print()
 
     # getting baudrate from user
     while True:
@@ -270,7 +287,7 @@ def collect_data(num_of_samples: int, ser, print_sample=False, headers_in_data=T
         data = pd.concat([data, line], ignore_index=True)
 
         if count == 0 and headers_in_data:
-            pass # skipping header reading
+            pass  # skipping header reading
         elif print_sample and count > 0:
             # if user wants to print the reads as they're collected.
             values = pd.Series(line.values[0]).to_numpy().astype(str)
