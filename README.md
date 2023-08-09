@@ -4,6 +4,7 @@ Python program to connect to an arduino, read in data and save it to a CSV File.
 This program uses **pandas** and **progressbar2** libaries.
 - pandas: https://pandas.pydata.org/
 - progressbar2: https://pypi.org/project/progressbar2/
+- pyserial: https://pyserial.readthedocs.io/en/latest/
 
 DataFrame are set up as columns.
 
