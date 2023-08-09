@@ -240,7 +240,10 @@ def collect_data(num_of_samples: int, ser, print_sample=False, headers=True) -> 
             f'Col {i}' for i in range(len(data_in.split()))]
 
     data = pd.DataFrame(columns=column_names)
+
+    # user wants to print data
     if print_sample:
+        # printing column headers
         print(', '.join(column_names))
 
     # Loop to collect data
@@ -253,9 +256,10 @@ def collect_data(num_of_samples: int, ser, print_sample=False, headers=True) -> 
 
         if print_sample:
             # if user wants to print the reads as they're collected.
-            text = ', '.join(
-                pd.Series(line.values[0]).to_numpy().astype(str)
-            )
+            values = pd.Series(line.values[0]).to_numpy().astype(str)
+            
+            text = ', '.join(values)
+            text += f' | Sample {count}/{num_of_samples}'
             print(text)
         else:
             # updating progess bar
