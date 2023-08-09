@@ -226,15 +226,15 @@ def collect_data(num_of_samples: int, ser, print_sample=False, headers=True) -> 
         bar = progressbar.ProgressBar(max_value=num_of_samples,
                                       widgets=widgets).start()
 
-    ser.open()
     # creating dataframe and declaring column headers.
+    ser.open()
     data_in = ser.readline().decode().strip()
     if headers:
         column_names = data_in.split()
     else:
         column_names = [
             f'Col {i}' for i in range(len(data_in.split()))]
-        
+
     data = pd.DataFrame(columns=column_names)
     if print_sample:
         print(', '.join(column_names))
