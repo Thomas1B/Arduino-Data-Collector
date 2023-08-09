@@ -41,6 +41,7 @@ def main() -> None:
     save_name = get_saving_params()
     print()  # for spacing
 
+    # loop waiting for user to start data collection
     while True:
         start = input("Press Enter to start or another key to quit: ")
 
@@ -51,6 +52,7 @@ def main() -> None:
         else:
             exit()
 
+    # collecting data
     data = collect_data(num_of_samples,
                         ser=ser,
                         print_sample=print_sample,
@@ -74,13 +76,14 @@ def get_collection_params() -> tuple:
     Function to get the parameters for collecting data.
 
         Returns: 
-            (port, baudrate, num_of_samples, header)
+            (ser, num_of_samples, header)
 
     '''
     user_print = '---> {}\n'  # string to print
 
+    # temperory variables
     port, baudrate, num_of_samples = None, None, None
-    ser = None
+    ser = None  # serial object
 
     # getting the port from user
     while True:
@@ -108,8 +111,8 @@ def get_collection_params() -> tuple:
     print(user_print.format(baudrate))
 
     print('Connecting to the Arduino ', end='')
+    # try block for connecting to arduino.
     try:
-        # try block for connecting to arduino.
         ser = serial.Serial(port, baudrate)
         ser.close()
         print('was successful!\n')
@@ -157,7 +160,7 @@ def get_saving_params() -> str:
     text = '\nData is saved as CSV file automatically.'
     print(text)
 
-    # Asking user for filename for saving.
+    # Asking user for the filename for saving.
     text = 'Enter a filename for the data file, or leave blank for the default name: '
     user = input(text)
     if user:
@@ -178,6 +181,7 @@ def get_saving_params() -> str:
         else:
             overwrite = False
 
+    # user doesn't want to overwrite
     if not overwrite:
         # used for default and custom names.
         try:
@@ -205,7 +209,7 @@ def collect_data(num_of_samples: int, ser, print_sample=False, headers=True) -> 
             print_sample: print sample as collected.
 
         Returns:
-            DataFrame, with each kind of data as a column, (Ex: time, voltage, temperature, etc)
+            DataFrame, with each data type as a column, (Ex: time, voltage, temperature, etc)
 
     '''
 
@@ -213,7 +217,7 @@ def collect_data(num_of_samples: int, ser, print_sample=False, headers=True) -> 
     if print_sample:
         print("\nData collection started\n")
 
-    # showing a progess bar
+    # showing a progess bar using is not collecting data
     bar = None
     if not print_sample:
         widgets = [progressbar.Timer(format='Runtime: %(elapsed)s'), ' | ',
@@ -226,8 +230,8 @@ def collect_data(num_of_samples: int, ser, print_sample=False, headers=True) -> 
         bar = progressbar.ProgressBar(max_value=num_of_samples,
                                       widgets=widgets).start()
 
-    # creating dataframe and declaring column headers.
-    ser.open()
+    # Creating dataframe and declaring column headers:
+    ser.open()  # reconnecting to arduino.
     data_in = ser.readline().decode().strip()
     if headers:
         column_names = data_in.split()
@@ -239,22 +243,22 @@ def collect_data(num_of_samples: int, ser, print_sample=False, headers=True) -> 
     if print_sample:
         print(', '.join(column_names))
 
-    # loop to collect data
+    # Loop to collect data
     for count in range(1, num_of_samples+1):
         # num_of_samples + 1 to account for reading column names.
 
-        # reading data line
+        # reading data line & adding to data frame
         line = read_data(ser=ser, column_names=column_names)
-
-        # adding line to dataframe
         data = pd.concat([data, line], ignore_index=True)
 
         if print_sample:
+            # if user wants to print the reads as they're collected.
             text = ', '.join(
                 pd.Series(line.values[0]).to_numpy().astype(str)
             )
             print(text)
         else:
+            # updating progess bar
             bar.update(count)
 
     if print_sample:
