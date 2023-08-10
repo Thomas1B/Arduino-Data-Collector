@@ -93,18 +93,21 @@ def get_collection_params() -> tuple:
         print(text.format(index, port[1]))
     print()
 
+    count = 0
     while True:
-        port = input("Enter the port: ")
+        port = input("Enter number corresponding to the port: ")
         if port.isdigit():
             if port in avaliable_indices:
                 port = avaliable_ports[int(port)-1][0]
                 break
             else:
-                text = f'Option "{port}" does not exist, try again.'
+                text = f'Option "{port}" does not exist, try again.\n'
                 print(text)
         else:
-            text = 'You must enter an integer corresponding to the port, try again.'
+            text = 'You must enter an integer corresponding to the port, try again.\n'
             print(text)
+        count += 1
+
     print()
 
     # getting baudrate from user
