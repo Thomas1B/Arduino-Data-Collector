@@ -93,7 +93,6 @@ def get_collection_params() -> tuple:
         print(text.format(index, port[1]))
     print()
 
-    count = 0
     while True:
         port = input("Enter number corresponding to the port: ")
         if port.isdigit():
@@ -106,8 +105,6 @@ def get_collection_params() -> tuple:
         else:
             text = 'You must enter an integer corresponding to the port, try again.\n'
             print(text)
-        count += 1
-
     print()
 
     # getting baudrate from user
