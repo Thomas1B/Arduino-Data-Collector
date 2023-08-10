@@ -62,15 +62,8 @@ def main() -> None:
                         )
 
     # Saving data
-    try:
-        data.to_csv(save_name, index=False)
-    except Exception as err:
-        print("Error occurred while saving.")
-        if err:
-            print("\nError:")
-            print(err, '\n')
-        exit()
-    print(f'\nSaved as "{save_name}".\n')
+    if save_name != 'skip':
+        save_data(data=data, filename=save_name)
 
 
 def get_collection_params() -> tuple:
@@ -181,11 +174,13 @@ def get_saving_params() -> str:
     print(text)
 
     # Asking user for the filename for saving.
-    text = 'Enter a filename for the data file, or leave blank for the default name: '
+    text = 'Enter a filename for the data file, leave blank for the default name or type "skip" not to save: '
     user = input(text)
     if user:
-        if '.csv' in user:
-            user = user.strip('.csv')
+        if user.lower() == 'skip':
+            return 'skip'
+        elif '.csv' in user.lower():
+            user, _ = os.path.splitext(user)
     else:
         print('\t-> using default filename.\n')
         user = 'default'
@@ -217,6 +212,26 @@ def get_saving_params() -> str:
             pass
 
     return path
+
+
+def save_data(data: pd.DataFrame, filename: str) -> None:
+    '''
+    Function to save the data as a CSV file.
+
+        Parameters:
+            data: Dataframe.
+            filename: name that the csv will be saved as.
+
+    '''
+    try:
+        data.to_csv(filename, index=False)
+    except Exception as err:
+        print("\n ****** Error occurred while saving ******\n")
+        if err:
+            print("\nError:")
+            print(err, '\n')
+        exit()
+    print(f'\nData saved as "{filename}".\n')
 
 
 def collect_data(num_of_samples: int, ser, print_sample=False, headers_in_data=True) -> pd.DataFrame:
