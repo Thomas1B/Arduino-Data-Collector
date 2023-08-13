@@ -14,7 +14,7 @@ import pandas as pd
 import os
 
 
-default_num_of_samples = 50
+default_num_of_samples = 1000
 
 
 def main() -> None:
@@ -93,6 +93,7 @@ def get_collection_params() -> tuple:
         print(text.format(index, port[1]))
     print()
 
+    # getting port
     while True:
         port = input("Enter number corresponding to the port: ")
         if port.isdigit():
@@ -122,8 +123,8 @@ def get_collection_params() -> tuple:
             print(text)
     print(user_print.format(baudrate))
 
-    print('Connecting to the Arduino ', end='')
     # try block for connecting to arduino.
+    print('Connecting to the Arduino ', end='')
     try:
         ser = serial.Serial(port, baudrate)
         ser.close()
@@ -150,7 +151,7 @@ def get_collection_params() -> tuple:
 
     # asking user if headers_in_data are printed from the arduino
     header = input(
-        "Are headers_in_data printed from the arduino? (deflaut yes): ")
+        "Are headers printed from the arduino? (deflaut yes): ")
     if header.lower() in ['y', 'yes']:
         header = True
     elif header.lower() in ['n', 'no']:
@@ -234,7 +235,7 @@ def save_data(data: pd.DataFrame, filename: str) -> None:
     print(f'\nData saved as "{filename}".\n')
 
 
-def collect_data(num_of_samples: int, ser, print_sample=False, headers_in_data=True) -> pd.DataFrame:
+def collect_data(num_of_samples: int, ser: serial.Serial, print_sample=False, headers_in_data=True) -> pd.DataFrame:
     '''
     Function to read in data from the arduino.
 
