@@ -294,25 +294,29 @@ def collect_data(num_of_samples: int, ser: serial.Serial, print_sample=False, he
         print()  # Newline after separator
 
     # Loop to collect data
-    for count in range(0, num_of_samples+1):
-        # num_of_samples + 1 to account for reading column names.
+    try:
+        for count in range(0, num_of_samples+1):
+            # num_of_samples + 1 to account for reading column names.
 
-        # reading data line & adding to data frame
-        line = read_data(ser=ser, column_names=column_names)
-        data = pd.concat([data, line], ignore_index=True)
+            # reading data line & adding to data frame
+            line = read_data(ser=ser, column_names=column_names)
+            data = pd.concat([data, line], ignore_index=True)
 
-        if count == 0 and headers_in_data:
-            pass  # skipping header reading
-        elif print_sample and count > 0:
-            # if user wants to print the reads as they're collected.
-            values = pd.Series(line.values[0]).to_numpy().astype(str)
-            for item, width in zip(values, column_widths):
-                print(f"{item:<{width}}", end=" | ")
-            print(f'Sample {count}/{num_of_samples}')
+            if count == 0 and headers_in_data:
+                pass  # skipping header reading
+            elif print_sample and count > 0:
+                # if user wants to print the reads as they're collected.
+                values = pd.Series(line.values[0]).to_numpy().astype(str)
+                for item, width in zip(values, column_widths):
+                    print(f"{item:<{width}}", end=" | ")
+                print(f'Sample {count}/{num_of_samples}')
 
-        elif not print_sample:
+            elif not print_sample:
             # updating progess bar
-            bar.update(count)
+                bar.update(count)
+    except KeyboardInterrupt:
+        print('User stopped Program\n')
+        exit(1)
 
     if print_sample:
         print("\nData collection finished\n")
@@ -333,7 +337,11 @@ def read_data(ser: serial.Serial, column_names: list = []) -> pd.DataFrame:
     '''
 
     # reading a sample then decoding and stripping
-    data_in = ser.readline().decode().strip()
+    try:
+        data_in = ser.readline().decode().strip()
+    except serial.SerialException:
+        print('-> Arduino was disconnected.\n')
+        exit(1)
 
     # converting a sample into floats and create a dataframe.
     data = pd.DataFrame(data_in.split(), dtype=float).T
