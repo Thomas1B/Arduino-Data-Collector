@@ -267,7 +267,7 @@ def collect_data(num_of_samples: int, ser: serial.Serial, print_sample=False, he
         bar = progressbar.ProgressBar(max_value=num_of_samples,
                                       widgets=widgets).start()
 
-    # Creating dataframe and declaring column headers_in_data:
+    # Creating a dataframe and declaring column headers:
     ser.open()  # reconnecting to arduino.
     data_in = ser.readline().decode().strip()
     if headers_in_data:
@@ -275,7 +275,6 @@ def collect_data(num_of_samples: int, ser: serial.Serial, print_sample=False, he
     else:
         column_names = [
             f'Col {i}' for i in range(len(data_in.split()))]
-
     data = pd.DataFrame(columns=column_names)
 
     # Calculate the width for each column
