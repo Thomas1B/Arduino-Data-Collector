@@ -78,7 +78,7 @@ def get_collection_params() -> tuple:
             max_count = int(user)
             break
         except ValueError:
-            print('Use you must enter an integer, try again.\n')
+            print('You must enter an integer, try again.\n')
 
     # Asking user for a filename to save data as:
     print("\nData is saved as a CSV file only.")
