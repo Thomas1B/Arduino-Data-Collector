@@ -17,31 +17,33 @@ default_sample_count = 10
 
 # *********** Variables ***********
 
-headers = None
-dataframe = None
-
 delimiters = [';', '|', ':', ',']
 
 
-def test_connection(port: str, baudrate: int) -> serial.Serial:
+def test_connection(port: str, baudrate: int, close=True) -> serial.Serial:
     '''
     Function to test the connection to the microcontroller (MCU).
 
     Parameters:
         port: port to connect to MCU (str).
         baudrate: baudrate of MCU (int).
+        close (bool: default True): close connection to MCU after test.
 
     Returns:
         Serial object
     '''
 
-    # baudrate = int(baudrate)
+    # try block to test connection to MCU
     try:
         ser = serial.Serial(port=port, baudrate=baudrate)
+        print("Connection Succesful!")
+        if close:
+            ser.close()
+
     except serial.SerialException as err:
         err = str(err).split(':')[0]
-        print(f"Error: {err}, check the port and/or baudrate!\n")
-        exit(1)
+        print("Connection Failed!")
+        exit(f"Error: {err}, check the port and/or baudrate!\n")
 
     return ser
 
@@ -71,7 +73,7 @@ def get_collection_params() -> tuple:
     while True:
         text = f'How samples to collect? (default {default_sample_count}): '
         try:
-            # checking if user enter an integer.
+            # checking if user entered an integer.
             user = input(text)
             if user == '':
                 user = default_sample_count
@@ -82,19 +84,29 @@ def get_collection_params() -> tuple:
 
     # Asking user for a filename to save data as:
     print("\nData is saved as a CSV file only.")
-    filename = input('Enter a filename to save the data: ')
+    filename = input('Enter a filename to save the data or skip not to save: ')
     if not filename:
         filename = 'Arduino_data'
-    path = os.path.join(save_folder_path, f'{filename}.csv')
+    elif '.csv' in filename:
+        filename = filename.split('.')[0]
+
+    if filename == 'skip':
+        path = None
+    else:
+        path = os.path.join(save_folder_path, f'{filename}.csv')
 
     return headers_printed, max_count, path
 
 
 def main():
     count = 0  # data collected count
+
+    headers = None
+    dataframe = None
+
     headers_printed, max_count, path = get_collection_params()
     print()
-    ser = test_connection(port=port, baudrate=baudrate)
+    ser = test_connection(port=port, baudrate=baudrate, close=False)
 
     try:
         '''
@@ -145,9 +157,19 @@ def main():
     print("\nSample of collected data:\n")
     print(dataframe.head())
 
-    # getting user info to save file
-    print(f'\nData saved as "{path}"\n')
-    dataframe.to_csv(path, index=False)
+    if path:  # User wants to save data.
+        # loop to check if filename already exists, if so modify the name
+        base, ext = os.path.splitext(path)
+        count = 1
+        while os.path.exists(path):
+            path = f'{base} ({count}){ext}'
+            count += 1
+
+        dataframe.to_csv(path, index=False)
+        print(f'\nData saved as "{path}"\n')
+
+    else:  # User skipped data saving.
+        print('\nSaving data was skipped.')
 
 
 if __name__ == "__main__":
