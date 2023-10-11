@@ -26,10 +26,6 @@ def get_available_ports() -> list[str]:
     # Get a list of all available serial ports
     available_ports = serial.tools.list_ports.comports()
 
-    # # Print the list of available ports
-    # for port in available_ports:
-    #     print(f"Port: {port.device}, Description: {port.description}")
-
     available_ports = [port.device for port in available_ports]
 
     return available_ports
